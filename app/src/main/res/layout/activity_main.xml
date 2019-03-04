@@ -6,32 +6,50 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/listenTextView"
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:visibility="gone"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/listenButton"
         android:layout_centerInParent="true"
-        android:text="Listen" />
+        android:layout_height="wrap_content" />
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/responseTextView"
-        android:layout_width="wrap_content"
-        android:layout_marginTop="20dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/listenTextView"
-        android:layout_centerInParent="true"
-        android:text="Response!" />
+        android:gravity="center_horizontal|top"
+        android:orientation="vertical">
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/listenButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
-        android:backgroundTint="@android:color/holo_orange_light"
-        android:text="Speak"
-        android:textColor="@android:color/white" />
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/responseTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Response!" />
 
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/typeEdiText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:hint="Say something"
+            android:textColor="@android:color/black" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/listenButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@android:color/holo_orange_light"
+            android:text="Speak"
+            android:textColor="@android:color/white" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/listenTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Listen" />
+
+    </LinearLayout>
 </RelativeLayout>

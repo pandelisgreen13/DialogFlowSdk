@@ -24,7 +24,7 @@ public class RetrofitClient {
 
         if (retrofitApi == null) {
             Retrofit.Builder retrofitBuilder = new Retrofit.Builder();
-            retrofitBuilder.baseUrl("https://dialogflow.googleapis.com");
+            retrofitBuilder.baseUrl("https://dialogflow.googleapis.com/");
             retrofitBuilder.client(getOkHttpClientBuilder().build());
             retrofitBuilder.addConverterFactory(GsonConverterFactory.create());
             retrofitBuilder.addCallAdapterFactory(RxErrorHandlingCallAdapterFactory.create());
