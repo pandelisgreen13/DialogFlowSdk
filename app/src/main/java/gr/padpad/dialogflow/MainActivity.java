@@ -19,9 +19,11 @@ import com.google.cloud.dialogflow.v2.SessionName;
 import com.google.cloud.dialogflow.v2.SessionsClient;
 import com.google.cloud.dialogflow.v2.SessionsSettings;
 import com.google.cloud.dialogflow.v2.TextInput;
+import com.google.protobuf.Value;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -46,20 +48,18 @@ public class MainActivity extends AppCompatActivity {
     AppCompatTextView responseTextView;
 
     @BindView(R2.id.typeEdiText)
-    AppCompatEditText typeEditext;
+    AppCompatEditText typeEdiText;
 
     @BindView(R2.id.progressBar)
     ProgressBar progressBar;
 
     @OnClick(R2.id.wrikeButton)
     void type() {
-        sendMessage(Objects.requireNonNull(typeEditext.getText()).toString());
+        sendMessage(Objects.requireNonNull(typeEdiText.getText()).toString());
     }
 
     @OnClick(R2.id.listenButton)
-    void listen() {
-        startSpeechRecognizer();
-    }
+    void listen() { startSpeechRecognizer(); }
 
     private SessionsClient sessionsClient;
     private SessionName session;
@@ -79,8 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("SetTextI18n")
     @Override
-    protected void onActivityResult(int requestCode, int resultCode,
-                                    Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_SPEECH_RECOGNIZER) {
@@ -94,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initTTS() {
-        speak("Hello i am the Cortana, how can i help you?");
+        textToSpeech("Hello i am the Cortana, how can i help you?", false);
     }
 
     private void initChatbot() {
@@ -114,7 +113,6 @@ public class MainActivity extends AppCompatActivity {
     private void startSpeechRecognizer() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        //intent.putExtra(RecognizerIntent.EXTRA_PROMPT, mQuestion);
         startActivityForResult(intent, REQUEST_SPEECH_RECOGNIZER);
     }
 
@@ -123,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "Please enter your requestQueryMessage!", Toast.LENGTH_LONG).show();
         } else {
             Timber.d("Bot message: %s", msg);
-            typeEditext.setText("");
+            typeEdiText.setText("");
             requestQueryMessage(msg);
         }
     }
@@ -139,17 +137,16 @@ public class MainActivity extends AppCompatActivity {
         if (response != null) {
             String botReply = response.getQueryResult().getFulfillmentText();
             Timber.d("Bot Reply: %s", botReply);
-            speak(botReply);
+            Map<String, Value> fields = response.getQueryResult().getParameters().getFields();
+            textToSpeech(botReply, response.getQueryResult().getAllRequiredParamsPresent());
             responseTextView.setText(botReply);
-//            final Handler handler = new Handler();
-//            handler.postDelayed(() -> startSpeechRecognizer(), 3000);
         } else {
             Timber.d("Bot Reply: Null");
             responseTextView.setText("There was some communication issue. Please Try again!");
         }
     }
 
-    private void speak(String msg) {
+    private void textToSpeech(String msg, boolean allRequiredParamsPresent) {
         textToSpeech = new TextToSpeech(getApplicationContext(), status -> {
             if (status != TextToSpeech.ERROR) {
                 textToSpeech.setLanguage(Locale.UK);
@@ -157,17 +154,16 @@ public class MainActivity extends AppCompatActivity {
                 textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                     @Override
                     public void onStart(String utteranceId) {
-
                     }
 
                     @Override
                     public void onDone(String utteranceId) {
-                        startSpeechRecognizer();
+                        if (!allRequiredParamsPresent)
+                            startSpeechRecognizer();
                     }
 
                     @Override
                     public void onError(String utteranceId) {
-
                     }
                 });
             }
