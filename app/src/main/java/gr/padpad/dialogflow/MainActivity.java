@@ -1,12 +1,11 @@
 package gr.padpad.dialogflow;
 
-import ai.api.android.AIService;
-import ai.api.model.Result;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -21,14 +20,12 @@ import com.google.cloud.dialogflow.v2.SessionsClient;
 import com.google.cloud.dialogflow.v2.SessionsSettings;
 import com.google.cloud.dialogflow.v2.TextInput;
 
-import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
-import ai.api.AIListener;
-import ai.api.android.AIConfiguration;
-import ai.api.model.AIError;
-import ai.api.model.AIResponse;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatEditText;
 import androidx.appcompat.widget.AppCompatTextView;
 import butterknife.BindView;
@@ -39,6 +36,8 @@ import gr.padpad.dialogflow.retrofit.client.RetrofitClient;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final int REQUEST_SPEECH_RECOGNIZER = 3000;
 
     @BindView(R2.id.listenTextView)
     AppCompatTextView listenTextView;
@@ -52,15 +51,21 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R2.id.progressBar)
     ProgressBar progressBar;
 
+    @OnClick(R2.id.wrikeButton)
+    void type() {
+        sendMessage(Objects.requireNonNull(typeEditext.getText()).toString());
+    }
+
     @OnClick(R2.id.listenButton)
     void listen() {
-        sendMessage(Objects.requireNonNull(typeEditext.getText()).toString());
-        progressBar.setVisibility(View.VISIBLE);
+        startSpeechRecognizer();
     }
 
     private SessionsClient sessionsClient;
     private SessionName session;
     private String uuid = UUID.randomUUID().toString();
+    private TextToSpeech textToSpeech;
+    private String mAnswer = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,13 +74,33 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         RetrofitClient.initRetrofit();
         initChatbot();
+        initTTS();
+    }
+
+    @SuppressLint("SetTextI18n")
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+                                    Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_SPEECH_RECOGNIZER) {
+            if (resultCode == RESULT_OK) {
+                List<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                mAnswer = results.get(0);
+                requestQueryMessage(mAnswer);
+                responseTextView.setText(mAnswer);
+            }
+        }
+    }
+
+    private void initTTS() {
+        speak("Hello i am the Cortana, how can i help you?");
     }
 
     private void initChatbot() {
         try {
-            InputStream stream = getResources().openRawResource(R.raw.test_agent_credentials);
-            GoogleCredentials credentials = GoogleCredentials.fromStream(stream);
-            String projectId = ((ServiceAccountCredentials)credentials).getProjectId();
+            GoogleCredentials credentials = GoogleCredentials.fromStream(getResources().openRawResource(R.raw.test_agent_credentials));
+            String projectId = ((ServiceAccountCredentials) credentials).getProjectId();
 
             SessionsSettings.Builder settingsBuilder = SessionsSettings.newBuilder();
             SessionsSettings sessionsSettings = settingsBuilder.setCredentialsProvider(FixedCredentialsProvider.create(credentials)).build();
@@ -86,25 +111,74 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void startSpeechRecognizer() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        //intent.putExtra(RecognizerIntent.EXTRA_PROMPT, mQuestion);
+        startActivityForResult(intent, REQUEST_SPEECH_RECOGNIZER);
+    }
+
     private void sendMessage(String msg) {
         if (msg.trim().isEmpty()) {
-            Toast.makeText(MainActivity.this, "Please enter your query!", Toast.LENGTH_LONG).show();
+            Toast.makeText(MainActivity.this, "Please enter your requestQueryMessage!", Toast.LENGTH_LONG).show();
         } else {
+            Timber.d("Bot message: %s", msg);
             typeEditext.setText("");
-            QueryInput queryInput = QueryInput.newBuilder().setText(TextInput.newBuilder().setText(msg).setLanguageCode("en-US")).build();
-            new RequestQuery(MainActivity.this, session, sessionsClient, queryInput).execute();
+            requestQueryMessage(msg);
         }
+    }
+
+    private void requestQueryMessage(String msg) {
+        progressBar.setVisibility(View.VISIBLE);
+        QueryInput queryInput = QueryInput.newBuilder().setText(TextInput.newBuilder().setText(msg).setLanguageCode("en-US")).build();
+        new RequestQuery(MainActivity.this, session, sessionsClient, queryInput).execute();
     }
 
     public void getResponse(DetectIntentResponse response) {
         progressBar.setVisibility(View.GONE);
         if (response != null) {
             String botReply = response.getQueryResult().getFulfillmentText();
-            Timber.d( "Bot Reply: %s", botReply);
+            Timber.d("Bot Reply: %s", botReply);
+            speak(botReply);
             responseTextView.setText(botReply);
+//            final Handler handler = new Handler();
+//            handler.postDelayed(() -> startSpeechRecognizer(), 3000);
         } else {
-            Timber.d( "Bot Reply: Null");
+            Timber.d("Bot Reply: Null");
             responseTextView.setText("There was some communication issue. Please Try again!");
+        }
+    }
+
+    private void speak(String msg) {
+        textToSpeech = new TextToSpeech(getApplicationContext(), status -> {
+            if (status != TextToSpeech.ERROR) {
+                textToSpeech.setLanguage(Locale.UK);
+                textToSpeech.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "String id");
+                textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String utteranceId) {
+
+                    }
+
+                    @Override
+                    public void onDone(String utteranceId) {
+                        startSpeechRecognizer();
+                    }
+
+                    @Override
+                    public void onError(String utteranceId) {
+
+                    }
+                });
+            }
+        });
+    }
+
+    public void onPause() {
+        super.onPause();
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
         }
     }
 }

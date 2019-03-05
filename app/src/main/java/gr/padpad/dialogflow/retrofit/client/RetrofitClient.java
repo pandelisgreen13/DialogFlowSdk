@@ -1,9 +1,7 @@
 package gr.padpad.dialogflow.retrofit.client;
 
-import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
