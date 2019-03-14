@@ -1,4 +1,4 @@
-package gr.padpad.dialogflow;
+package gr.padpad.dialogflow.utils;
 
 import android.os.Environment;
 import android.text.TextUtils;

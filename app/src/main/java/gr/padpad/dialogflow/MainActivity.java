@@ -9,17 +9,11 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.TextToSpeechService;
-import android.speech.tts.UtteranceProgressListener;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.dialogflow.v2.DetectIntentResponse;
@@ -30,27 +24,11 @@ import com.google.cloud.dialogflow.v2.SessionsSettings;
 import com.google.cloud.dialogflow.v2.TextInput;
 import com.google.cloud.speech.v1.SpeechClient;
 import com.google.cloud.speech.v1.SpeechSettings;
-import com.google.cloud.texttospeech.v1.AudioConfig;
-import com.google.cloud.texttospeech.v1.AudioEncoding;
-import com.google.cloud.texttospeech.v1.SsmlVoiceGender;
-import com.google.cloud.texttospeech.v1.SynthesisInput;
-import com.google.cloud.texttospeech.v1.SynthesizeSpeechResponse;
-import com.google.cloud.texttospeech.v1.TextToSpeechClient;
-import com.google.cloud.texttospeech.v1.VoiceSelectionParams;
 import com.google.cloud.translate.Detection;
 import com.google.cloud.translate.Translate;
-import com.google.cloud.translate.TranslateOptions;
-import com.google.cloud.translate.Translation;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.Value;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -64,14 +42,10 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import gr.padpad.dialogflow.model.RequestQuery;
 import gr.padpad.dialogflow.retrofit.client.RetrofitClient;
+import gr.padpad.dialogflow.utils.FileUtils;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
-import okhttp3.ResponseBody;
-import okio.BufferedSink;
-import okio.Okio;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {
@@ -101,10 +75,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private SessionsClient sessionsClient;
-    private SpeechClient text;
     private SessionName session;
     private String uuid = UUID.randomUUID().toString();
-    private TextToSpeech textToSpeech;
     private String mAnswer = "";
     private final static int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private CompositeDisposable compositeDisposable;
@@ -120,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         RetrofitClient.initRetrofit();
         compositeDisposable = new CompositeDisposable();
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         initChatbot();
         initTTS();
@@ -143,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initTranslate() {
-        translate = TranslateOptions.newBuilder().setApiKey("myKey").build().getService();
+      //  translate = TranslateOptions.newBuilder().setApiKey("myKey").build().getService();
     }
 
     private void initTTS() {
@@ -233,14 +204,4 @@ public class MainActivity extends AppCompatActivity {
         Detection detection = translate.detect(message);
         return detection.getLanguage();
     }
-
-    public void onPause() {
-        super.onPause();
-        if (textToSpeech != null) {
-            textToSpeech.stop();
-            textToSpeech.shutdown();
-        }
-    }
-
-
 }

@@ -54,6 +54,14 @@
             android:background="@drawable/microphone_control"
             android:backgroundTint="@android:color/holo_orange_light" />
 
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/stopButton"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="10dp"
+            android:background="@android:drawable/ic_media_pause"
+            android:backgroundTint="@android:color/holo_orange_light" />
+
     </LinearLayout>
 
     <ProgressBar

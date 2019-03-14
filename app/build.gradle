@@ -55,9 +55,9 @@ dependencies {
 
     implementation 'io.grpc:grpc-okhttp:1.15.1'
     implementation 'com.google.cloud:google-cloud-speech:0.41.0-alpha'
-    implementation 'com.google.cloud:google-cloud-texttospeech:0.83.0-beta'
+  //  implementation 'com.google.cloud:google-cloud-texttospeech:0.83.0-beta'
     implementation 'com.google.cloud:google-cloud-translate:1.65.0'
     //Need for tts
-    implementation 'com.google.errorprone:error_prone_annotations:2.2.0'
-    implementation 'org.codehaus.mojo:animal-sniffer-annotations:1.17'
+    //implementation 'com.google.errorprone:error_prone_annotations:2.2.0'
+    //implementation 'org.codehaus.mojo:animal-sniffer-annotations:1.17'
 }
